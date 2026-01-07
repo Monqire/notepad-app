@@ -149,6 +149,8 @@
 
 
 .pageTab {
+    position: relative;
+    pointer-events: auto;
     padding: 5px 10px;
     background: #1c2a2f;
     border: 1px solid #2c3a40;
@@ -163,6 +165,7 @@
     text-overflow: ellipsis;   /* adds "..." when too long */
     flex-shrink: 0;            /* prevents shrinking weirdly */
 }
+
 
 
         .pageTab:active {
@@ -379,6 +382,7 @@ function renderTabs() {
         tab.className = "pageTab" + (i === currentPage ? " active" : "");
         tab.textContent = page.name;
         tab.draggable = true;
+tab.title = page.name;
 
         tab.addEventListener("click", () => switchPage(i));
 
