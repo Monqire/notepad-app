@@ -298,6 +298,15 @@
     pointer-events: none;
     z-index: 999;
 }
+#saveStatus {
+    position: absolute;
+    left: 10px;          /* under the Clear button */
+    top: 55px;           /* adjust depending on your toolbar height */
+    font-size: 12px;
+    color: #9bb2c9;
+    opacity: 0.8;
+    pointer-events: none;
+}
 
 </style>
 </head>
@@ -311,6 +320,8 @@
 
 <div id="toolbar">
     <button id="clearBtn">Clear</button>
+    <span id="saveStatus"></span>
+
     <button id="fontUp">A+</button>
     <button id="fontDown">A-</button>
     <button id="fontReset">Reset</button>
@@ -337,7 +348,6 @@
     <div class="menuItem" id="deletePageBtn">Delete Page</div>
 </div>
 
-<span id="saveStatus"></span>
 <div id="fontPopup">Size: 16</div>
 
 <div id="textWrapper">
