@@ -300,13 +300,15 @@
 }
 #saveStatus {
     position: absolute;
-    left: 10px;          /* under the Clear button */
-    top: 55px;           /* adjust depending on your toolbar height */
+    top: calc(100% + 16px);  /* same vertical logic as warning box */
+    left: -300px;                /* aligns with Clear button area */
     font-size: 12px;
     color: #9bb2c9;
     opacity: 0.8;
     pointer-events: none;
+    z-index: 999;
 }
+
 
 </style>
 </head>
@@ -320,7 +322,6 @@
 
 <div id="toolbar">
     <button id="clearBtn">Clear</button>
-    <span id="saveStatus"></span>
 
     <button id="fontUp">A+</button>
     <button id="fontDown">A-</button>
@@ -333,6 +334,7 @@
             <div id="pageTabs"></div>
             <button id="addPageBtn">+</button>
         </div>
+    <span id="saveStatus"></span>
 
         <div class="data-warning-top">
             Before clearing Cookies And Other Site Data or Re-installing Your Browser, BACKUP Your NOTES!
