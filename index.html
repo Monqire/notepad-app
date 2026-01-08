@@ -454,6 +454,12 @@ function reorderPages(from, to) {
 --------------------------- */
 
 function switchPage(i) {
+    // Prevent switching to invalid pages
+    if (i < 0 || i >= pages.length) {
+        console.warn("switchPage: invalid index", i);
+        return;
+    }
+
     pages[currentPage].content = noteArea.value;
     currentPage = i;
     noteArea.value = pages[currentPage].content;
@@ -461,6 +467,7 @@ function switchPage(i) {
     savePages();
     renderTabs();
 }
+
 
 /* ---------------------------
    ADD PAGE
@@ -539,6 +546,17 @@ document.getElementById("deletePageBtn").onclick = () => {
         return;
     }
 
+    //  Save deleted page to undo stack
+    undoStack.push({
+        pageIndex: menuTarget,
+        pageName: pages[menuTarget].name,
+        pageContent: pages[menuTarget].content
+    });
+
+    if (undoStack.length > undoLimit) undoStack.shift();
+    redoStack = [];
+
+    // Delete the page
     pages.splice(menuTarget, 1);
 
     if (currentPage >= pages.length) {
@@ -550,6 +568,7 @@ document.getElementById("deletePageBtn").onclick = () => {
     savePages();
     renderTabs();
 };
+
 
 /* ---------------------------
    COUNTER
@@ -580,10 +599,13 @@ noteArea.addEventListener("input", () => {
 
 });
 noteArea.addEventListener("input", () => {
-    undoStack.push({
-        page: currentPage,
-        text: noteArea.value
-    });
+undoStack.push({
+    pageIndex: currentPage,
+    pageName: pages[currentPage].name,
+    pageContent: noteArea.value   
+});
+
+
 
     if (undoStack.length > undoLimit) {
         undoStack.shift();
@@ -596,10 +618,10 @@ let lastInputWasDelete = false;
 noteArea.addEventListener("keydown", (e) => {
     if (e.key === "Backspace" || e.key === "Delete") {
         if (!lastInputWasDelete) {
-            // First delete in a burst → save pre-delete state
             undoStack.push({
-                page: currentPage,
-                text: noteArea.value
+                pageIndex: currentPage,
+                pageName: pages[currentPage].name,
+                pageContent: noteArea.value
             });
 
             if (undoStack.length > undoLimit) undoStack.shift();
@@ -610,6 +632,8 @@ noteArea.addEventListener("keydown", (e) => {
         lastInputWasDelete = false;
     }
 });
+
+
 
 
 
@@ -651,10 +675,11 @@ document.getElementById("fontReset").onclick = () => updateFont(16);
 document.getElementById("clearBtn").addEventListener("click", () => {
     if (confirm("Are you sure you want to clear this page?")) {
 
-        undoStack.push({
-            page: currentPage,
-            text: noteArea.value
-        });
+undoStack.push({
+    pageIndex: currentPage,
+    pageName: pages[currentPage].name,
+    pageContent: noteArea.value 
+});
 
         redoStack = [];
 
@@ -673,22 +698,37 @@ document.addEventListener("keydown", (e) => {
 
             // Save current state to redo
             redoStack.push({
-                page: currentPage,
-                text: noteArea.value
+                pageIndex: currentPage,
+                pageName: pages[currentPage].name,
+                pageContent: noteArea.value
             });
 
-            // Switch to the page where the undo happened
-            if (previous.page !== currentPage) {
-                switchPage(previous.page);
+            // Clamp index
+            let idx = previous.pageIndex;
+            if (idx < 0) idx = 0;
+            if (idx > pages.length) idx = pages.length;
+
+            // Recreate page if missing
+            if (!pages[idx]) {
+                pages.splice(idx, 0, {
+                    name: previous.pageName,
+                    content: previous.pageContent
+                });
+                savePages();
+                renderTabs();
             }
 
-            // Restore text
-            noteArea.value = previous.text;
+            // Switch to restored page
+            switchPage(idx);
+
+            // Restore content
+            noteArea.value = previous.pageContent;
             saveCurrentPage();
-	    updateCounter();
+            updateCounter();
         }
     }
 });
+
 document.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.key.toLowerCase() === "y") {
         e.preventDefault();
@@ -698,22 +738,39 @@ document.addEventListener("keydown", (e) => {
 
             // Save current state to undo
             undoStack.push({
-                page: currentPage,
-                text: noteArea.value
+                pageIndex: currentPage,
+                pageName: pages[currentPage].name,
+                pageContent: noteArea.value
             });
 
-            // Switch to the page where redo belongs
-            if (next.page !== currentPage) {
-                switchPage(next.page);
+            // Clamp index
+            let idx = next.pageIndex;
+            if (idx < 0) idx = 0;
+            if (idx > pages.length) idx = pages.length;
+
+            // Recreate page if missing
+            if (!pages[idx]) {
+                pages.splice(idx, 0, {
+                    name: next.pageName,
+                    content: next.pageContent
+                });
+                savePages();
+                renderTabs();
             }
 
-            // Restore text
-            noteArea.value = next.text;
+            // Switch to restored page
+            switchPage(idx);
+
+            // Restore content
+            noteArea.value = next.pageContent;
             saveCurrentPage();
-	    updateCounter();
+            updateCounter();
         }
     }
 });
+
+
+
 
 
 
