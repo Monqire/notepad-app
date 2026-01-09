@@ -353,7 +353,13 @@
 <div id="fontPopup">Size: 16</div>
 
 <div id="textWrapper">
-    <textarea id="noteArea" placeholder="Start typing here..."></textarea>
+    <textarea id="noteArea"
+          placeholder="Start typing here..."
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"></textarea>
+
 </div>
 
 
@@ -365,12 +371,11 @@
 <div id="counterBox">
     0 characters • 0 words
 </div>
-
 <script>
 
 let undoStack = [];
 let redoStack = [];
-let undoLimit = 5000; // max history entries
+let undoLimit = 5000;
 
 let lastClearedText = "";
 let canUndoClear = false;
@@ -378,21 +383,21 @@ let canUndoClear = false;
 /* ---------------------------
    PAGE STORAGE (ARRAY)
 --------------------------- */
-
 let pages = JSON.parse(localStorage.getItem("pages_v4")) || [
     { name: "Page 1", content: "" }
 ];
 
 let currentPage = 0;
 
-function savePages() {
-    localStorage.setItem("pages_v4", JSON.stringify(pages));
+// Restore last opened page BEFORE rendering tabs
+let savedPage = parseInt(localStorage.getItem("lastPage"), 10);
+if (!isNaN(savedPage) && savedPage >= 0 && savedPage < pages.length) {
+    currentPage = savedPage;
 }
 
 /* ---------------------------
    RENDER TABS
 --------------------------- */
-
 function renderTabs() {
     const tabContainer = document.getElementById("pageTabs");
     tabContainer.innerHTML = "";
@@ -402,7 +407,7 @@ function renderTabs() {
         tab.className = "pageTab" + (i === currentPage ? " active" : "");
         tab.textContent = page.name;
         tab.draggable = true;
-tab.title = page.name;
+        tab.title = page.name;
 
         tab.addEventListener("click", () => switchPage(i));
 
@@ -411,7 +416,6 @@ tab.title = page.name;
             openMenu(e.pageX, e.pageY, i);
         });
 
-        /* DRAG EVENTS */
         tab.addEventListener("dragstart", (e) => {
             e.dataTransfer.setData("text/plain", i);
         });
@@ -431,10 +435,38 @@ tab.title = page.name;
     });
 }
 
+function switchPage(i) {
+    if (i < 0 || i >= pages.length) {
+        console.warn("switchPage: invalid index", i);
+        return;
+    }
+
+    pages[currentPage].content = noteArea.value;
+    currentPage = i;
+
+    localStorage.setItem("lastPage", currentPage);
+
+    noteArea.value = pages[currentPage].content;
+
+    updateCounter();
+    savePages();
+    renderTabs();
+}
+
+window.onload = () => {
+    renderTabs();
+    switchPage(currentPage);
+    noteArea.value = pages[currentPage].content;
+    updateCounter();
+};
+
+function savePages() {
+    localStorage.setItem("pages_v4", JSON.stringify(pages));
+}
+
 /* ---------------------------
    REORDER PAGES
 --------------------------- */
-
 function reorderPages(from, to) {
     if (from === to) return;
 
@@ -448,26 +480,6 @@ function reorderPages(from, to) {
     savePages();
     renderTabs();
 }
-
-/* ---------------------------
-   SWITCH PAGE
---------------------------- */
-
-function switchPage(i) {
-    // Prevent switching to invalid pages
-    if (i < 0 || i >= pages.length) {
-        console.warn("switchPage: invalid index", i);
-        return;
-    }
-
-    pages[currentPage].content = noteArea.value;
-    currentPage = i;
-    noteArea.value = pages[currentPage].content;
-    updateCounter();
-    savePages();
-    renderTabs();
-}
-
 
 /* ---------------------------
    ADD PAGE
